@@ -1,16 +1,16 @@
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 
-export function ButtonDemo() {
+export function ButtonDemo({ handle }: { handle: (name: string) => void }) {
   return (
     <section className="component-container">
       <h2>Button</h2>
       <section className="component-example">
         <p>Default Button</p>
-        <VSCodeButton appearance="primary">Button Text</VSCodeButton>
+        <VSCodeButton appearance="primary" onClick={_ => handle("default_button")}>Button Text</VSCodeButton>
       </section>
       <section className="component-example">
         <p>Secondary Button</p>
-        <VSCodeButton appearance="secondary">Button Text</VSCodeButton>
+        <VSCodeButton appearance="secondary" onClick={_ => handle("secondary_button")}>Button Text</VSCodeButton>
       </section>
       <section className="component-example">
         <p>With Disabled</p>
@@ -18,7 +18,7 @@ export function ButtonDemo() {
       </section>
       <section className="component-example">
         <p>With Start Icon</p>
-        <VSCodeButton>
+        <VSCodeButton onClick={_ => handle("with_start_icon_button")}>
           Button Text
           <span slot="start" className="codicon codicon-add"></span>
         </VSCodeButton>

@@ -1,6 +1,6 @@
 {
-  "name": "vscode-webview-react-sample",
-  "displayName": "vscode-webview-react-sample",
+  "name": "webview-sample",
+  "displayName": "webview-sample",
   "description": "A sample extension",
   "version": "0.0.1",
   "engines": {
@@ -10,15 +10,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "vscode-webview-react-sample.show",
-        "title": "vscode webview sample (React): Show"
+        "command": "webview-sample.show",
+        "title": "webview sample: Show"
       }
     ]
   },
   "scripts": {
-    "install:all": "npm install && cd webview-ui && npm install",
-    "start:webview": "cd webview-ui && npm run start",
-    "build:webview": "cd webview-ui && npm run build",
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",

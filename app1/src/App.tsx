@@ -11,16 +11,20 @@ import { RadioGroupDemo } from "./demos/RadioGroupDemo";
 import { TagDemo } from "./demos/TagDemo";
 import { TextAreaDemo } from "./demos/TextAreaDemo";
 import { TextFieldDemo } from "./demos/TextFieldDemo";
+import { vscode } from "./utilities/vscode";
 import "./App.css";
 import "./codicon.css";
 
 function App() {
+  const button_handle = (name: string) => {
+    vscode.postMessage({ name, type: "button_click" });
+  };
   return (
     <main>
       <h1>Webview UI Toolkit React Component Gallery</h1>
       <section className="component-row">
         <BadgeDemo></BadgeDemo>
-        <ButtonDemo></ButtonDemo>
+        <ButtonDemo handle={button_handle}></ButtonDemo>
         <CheckboxDemo></CheckboxDemo>
       </section>
       <section id="data-grid-row">

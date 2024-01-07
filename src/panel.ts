@@ -1,6 +1,36 @@
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
-import { getUri } from "../utilities/getUri";
-import { getNonce } from "../utilities/getNonce";
+
+/**
+ * A helper function that returns a unique alphanumeric identifier called a nonce.
+ *
+ * @remarks This function is primarily used to help enforce content security
+ * policies for resources/scripts being executed in a webview context.
+ *
+ * @returns A nonce
+ */
+function getNonce() {
+  let text = "";
+  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
+
+/**
+ * A helper function which will get the webview URI of a given file or resource.
+ *
+ * @remarks This URI can be used within a webview's HTML as a link to the
+ * given file/resource.
+ *
+ * @param webview A reference to the extension webview
+ * @param extensionUri The URI of the directory containing the extension
+ * @param pathList An array of strings representing the path to a file/resource
+ * @returns A URI pointing to the file/resource
+ */
+function getUri(webview: Webview, extensionUri: Uri, pathList: string[]) {
+  return webview.asWebviewUri(Uri.joinPath(extensionUri, ...pathList));
+}
 
 /**
  * This class manages the state and behavior of webview panels.
@@ -11,19 +41,26 @@ import { getNonce } from "../utilities/getNonce";
  * - Properly cleaning up and disposing of webview resources when the panel is closed
  * - Setting the HTML (and by proxy CSS/JavaScript) content of the webview panel
  */
-export class MainPanel {
-  public static currentPanel: MainPanel | undefined;
+export class Panel {
+  private static panels: { [key: string]: Panel; } = {};
+  private readonly _key: string;
   private readonly _panel: WebviewPanel;
-  private _disposables: Disposable[] = [];
+  private _disposables: Disposable[];
 
   /**
    * The MainPanel class private constructor (called only from the render method).
    *
+   * @param key A key for current instance identification
    * @param panel A reference to the webview panel
    * @param extensionUri The URI of the directory containing the extension
+   * @param msgHandler A callback function to handle messages from webview
    */
-  private constructor(panel: WebviewPanel, extensionUri: Uri) {
+  private constructor(key: string, panel: WebviewPanel, extensionUri: Uri, msgHandler: any) {
+    this._key = key;
     this._panel = panel;
+    this._disposables = [];
+
+    this._panel.webview.onDidReceiveMessage(msgHandler);
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
@@ -37,12 +74,14 @@ export class MainPanel {
    * Renders the current webview panel if it exists otherwise a new webview panel
    * will be created and displayed.
    *
-   * @param extensionUri The URI of the directory containing the extension.
+   * @param extensionUri The URI of the directory containing the extension
+   * @param key A key for current instance identification
+   * @param msgHandler A callback function to handle messages from webview
    */
-  public static render(extensionUri: Uri) {
-    if (MainPanel.currentPanel) {
+  public static render(extensionUri: Uri, key: string, msgHandler: any) {
+    if (key in Panel.panels) {
       // If the webview panel already exists reveal it
-      MainPanel.currentPanel._panel.reveal(ViewColumn.One);
+      Panel.panels[key]._panel.reveal(ViewColumn.One);
     } else {
       // If a webview panel does not already exist create and show a new one
       const panel = window.createWebviewPanel(
@@ -56,15 +95,15 @@ export class MainPanel {
         {
           // Enable JavaScript in the webview
           enableScripts: true,
-          // Restrict the webview to only load resources from the `out` and `webview-ui/build` directories
+          // Restrict the webview to only load resources from the `out` and `${key}/build` directories
           localResourceRoots: [
             Uri.joinPath(extensionUri, "out"),
-            Uri.joinPath(extensionUri, "webview-ui/build"),
+            Uri.joinPath(extensionUri, `${key}/build`),
           ],
         }
       );
 
-      MainPanel.currentPanel = new MainPanel(panel, extensionUri);
+      Panel.panels[key] = new Panel(key, panel, extensionUri, msgHandler);
     }
   }
 
@@ -72,7 +111,7 @@ export class MainPanel {
    * Cleans up and disposes of webview resources when the webview panel is closed.
    */
   public dispose() {
-    MainPanel.currentPanel = undefined;
+    delete Panel.panels[this._key];
 
     // Dispose of the current webview panel
     this._panel.dispose();
@@ -99,16 +138,16 @@ export class MainPanel {
    */
   private _getWebviewContent(webview: Webview, extensionUri: Uri) {
     // The CSS file from the React build output
-    const stylesUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.css"]);
+    const stylesUri = getUri(webview, extensionUri, [this._key, "build", "assets", "index.css"]);
     // Codicon font file from the React build output
     const codiconFontUri = getUri(webview, extensionUri, [
-      "webview-ui",
+      this._key,
       "build",
       "assets",
       "codicon.ttf",
     ]);
     // The JS file from the React build output
-    const scriptUri = getUri(webview, extensionUri, ["webview-ui", "build", "assets", "index.js"]);
+    const scriptUri = getUri(webview, extensionUri, [this._key, "build", "assets", "index.js"]);
 
     const nonce = getNonce();
 

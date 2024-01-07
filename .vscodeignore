@@ -12,14 +12,14 @@ out/test/**
 src/**
 
 # Ignore all webview-ui files except the build directory
-webview-ui/src/**
-webview-ui/public/**
-webview-ui/scripts/**
-webview-ui/index.html
-webview-ui/README.md
-webview-ui/package.json
-webview-ui/package-lock.json
-webview-ui/node_modules/**
+app1/src/**
+app1/public/**
+app1/scripts/**
+app1/index.html
+app1/README.md
+app1/package.json
+app1/package-lock.json
+app1/node_modules/**
 
 # Ignore Misc
 .yarnrc
